@@ -1,0 +1,2 @@
+POC question (team decision, practice case): Can the Option B case-orchestration layer enforce human-only decisions and the sanctions/PEP screening hold on the server, even when an AI assistant or a service account tries to decide, and still let a person complete the case when the AI is switched off?
+Why: ADR-03 / INV-01, INV-02, INV-07 carry the whole recommendation and D5 lists GAP-05 (screening-hold negative test not executed) as Critical.

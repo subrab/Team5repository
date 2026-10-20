@@ -1,0 +1,166 @@
+# Approved-by: Muthuvel (practice example)
+# DSL Converter agent output, schema-validated, reviewed by the Developer. Business-owned: change rules here, not in code.
+feature:
+  id: FEATURE-001
+  name: "Server-enforced human decision gate for KYC cases"
+  objective: "Only authorized people decide; only AML specialists clear holds; every attempt audited; no AI dependency"
+  version: "1.0"
+actors: [kyc_analyst, aml_specialist, authorized_approver, ai_assistant, service_account, screening_system]
+workflow:
+  - step_id: WF-001
+    description: "Create case (idempotent)"
+  - step_id: WF-004
+    description: "Screening alert places a hold; specialist clears it"
+  - step_id: WF-006
+    description: "Authorized approver decides"
+states: [NEW, EVIDENCE_CHECK, WAITING_FOR_CUSTOMER, ANALYST_REVIEW, SCREENING_HOLD, AWAITING_DECISION, DECIDED]
+transitions:
+  - action: start_check
+    from: [NEW]
+    to: EVIDENCE_CHECK
+    roles: [kyc_analyst]
+    kinds: [human]
+    rule_id: RULE-002
+  - action: request_evidence
+    from: [EVIDENCE_CHECK]
+    to: WAITING_FOR_CUSTOMER
+    roles: [kyc_analyst]
+    kinds: [human]
+    rule_id: RULE-002
+  - action: evidence_received
+    from: [WAITING_FOR_CUSTOMER]
+    to: EVIDENCE_CHECK
+    roles: [kyc_analyst]
+    kinds: [human]
+    rule_id: RULE-002
+  - action: evidence_complete
+    from: [EVIDENCE_CHECK]
+    to: ANALYST_REVIEW
+    roles: [kyc_analyst]
+    kinds: [human]
+    rule_id: RULE-002
+  - action: screening_alert
+    from: [NEW, EVIDENCE_CHECK, WAITING_FOR_CUSTOMER, ANALYST_REVIEW, AWAITING_DECISION]
+    to: SCREENING_HOLD
+    roles: [screening_system]
+    kinds: [service]
+    opens_hold: true
+    rule_id: RULE-007
+  - action: clear_hold
+    from: [SCREENING_HOLD]
+    to: ANALYST_REVIEW
+    roles: [aml_specialist]
+    kinds: [human]
+    requires: [reason]
+    closes_hold: true
+    rule_id: RULE-003
+  - action: submit_for_decision
+    from: [ANALYST_REVIEW]
+    to: AWAITING_DECISION
+    roles: [kyc_analyst]
+    kinds: [human]
+    rule_id: RULE-002
+  - action: approve
+    from: [AWAITING_DECISION, SCREENING_HOLD]
+    to: DECIDED
+    roles: [authorized_approver]
+    kinds: [human]
+    requires: [reason, evidence_refs]
+    guard: no_open_hold
+    rule_id: RULE-002
+  - action: reject
+    from: [AWAITING_DECISION, SCREENING_HOLD]
+    to: DECIDED
+    roles: [authorized_approver]
+    kinds: [human]
+    requires: [reason, evidence_refs]
+    guard: no_open_hold
+    rule_id: RULE-002
+rules:
+  - rule_id: RULE-001
+    implements: SPEC-001
+    when: decision_with_open_hold
+    then: refuse
+    reason: "screening hold is open"
+  - rule_id: RULE-002
+    implements: SPEC-002
+    when: actor_not_permitted_or_fields_missing
+    then: refuse
+    reason: "only an authorized human approver may decide, with reason and evidence"
+  - rule_id: RULE-003
+    implements: SPEC-003
+    when: hold_clearance_not_by_specialist
+    then: refuse
+    reason: "only an AML specialist may clear a hold, with a reason"
+  - rule_id: RULE-004
+    implements: SPEC-004
+    when: always
+    then: audit
+    reason: "every attempt is recorded"
+  - rule_id: RULE-005
+    implements: SPEC-005
+    when: ai_assist_disabled
+    then: continue_without_ai
+    reason: "AI is advisory only"
+  - rule_id: RULE-006
+    implements: SPEC-006
+    when: duplicate_idempotency_key
+    then: return_existing_case
+    reason: "one case per intake"
+  - rule_id: RULE-007
+    implements: SPEC-007
+    when: screening_alert
+    then: place_hold
+    reason: "alerts always stop the case"
+validations:
+  - val_id: VAL-001
+    field: [reason, evidence_refs]
+    check: required_for_decisions
+  - val_id: VAL-002
+    field: [reason]
+    check: required_for_hold_clearance
+exceptions:
+  - exc_id: EXC-001
+    when: action_not_allowed_from_state
+    fallback: refuse_and_audit
+data_model:
+  - entity: Case
+    fields: [case_id, idempotency_key, state, hold_open]
+  - entity: AuditEntry
+    fields: [seq, case_id, action, actor_id, role, kind, outcome, rule_id, reason, evidence_refs, rules_version]
+output_contract:
+  fields: [ok, state, rule_id, message]
+nfr:
+  - nfr_id: NFR-002
+    requirement: "100% of material actions audited with actor, reason, evidence and rules version"
+  - nfr_id: NFR-003
+    requirement: "AI assistant outage never blocks human completion"
+traceability:
+  - requirement: REQ-001
+    spec: SPEC-001
+    code: CODE-001
+    test: TEST-001
+  - requirement: REQ-002
+    spec: SPEC-002
+    code: CODE-002
+    test: TEST-002
+  - requirement: REQ-003
+    spec: SPEC-003
+    code: CODE-003
+    test: TEST-003
+  - requirement: REQ-004
+    spec: SPEC-004
+    code: CODE-004
+    test: TEST-004
+  - requirement: REQ-005
+    spec: SPEC-005
+    code: CODE-005
+    test: TEST-005
+  - requirement: REQ-006
+    spec: SPEC-006
+    code: CODE-006
+    test: TEST-006
+  - requirement: REQ-007
+    spec: SPEC-007
+    code: CODE-007
+    test: TEST-007

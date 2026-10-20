@@ -1,0 +1,45 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Iteration Report</title>
+<style>
+:root{--bg:#f3f5f4;--card:#fff;--fg:#16201e;--muted:#5a6a66;--line:#d3dbd8;--accent:#0d6b62;--good:#1f7a3d}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1514;--card:#161e1d;--fg:#e4ecea;--muted:#94a6a2;--line:#2c3a38;--accent:#4cc2b4;--good:#5cc982;color-scheme:dark}}
+body{background:var(--bg);color:var(--fg);font:14px/1.5 "Segoe UI",system-ui,sans-serif;margin:0;padding:24px max(16px,4vw)}
+h1{margin:0 0 4px;font-size:24px} .sub{color:var(--muted);margin:0 0 20px}
+.kpis{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+.k{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 16px;min-width:140px}
+.k b{display:block;font-size:24px;font-variant-numeric:tabular-nums} .k span{color:var(--muted);font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:24px}
+.c{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.c h3{margin:0;font-size:14px} .c p{margin:2px 0 6px;color:var(--muted);font-size:12px}
+svg text{fill:var(--muted);font-size:10px}
+.wrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:12.5px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+</style></head><body>
+<h1>Iteration Report</h1>
+<p class="sub">Every round: writer drafts, an independent reviewer scores the 6-dimension AI Friday scorecard and keeps a gap register, the writer remediates. Generated locally from iterations.csv.</p>
+<div class="kpis" id="kpis"></div>
+<div class="grid" id="grid"></div>
+<div class="wrap"><table><thead><tr><th>Time</th><th>Deliverable</th><th>Ver</th><th>Owner</th><th>Instruction</th><th>Examiner</th><th>Score</th><th>Open C/H</th><th>Closed</th><th>Owner notes</th><th>Top fixes requested</th></tr></thead><tbody id="rows"></tbody></table></div>
+<script>
+const ROWS=/*DATA*/[], TARGET=/*TARGET*/95;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const by={}; ROWS.forEach(r=>(by[r.deliverable]=by[r.deliverable]||[]).push(r));
+const done=Object.values(by).filter(a=>+a.at(-1).score>=TARGET).length;
+const tok=ROWS.reduce((s,r)=>s+ +r.tokens,0), cost=ROWS.reduce((s,r)=>s+ +r.est_cost_usd,0);
+document.getElementById("kpis").innerHTML=[[ROWS.length,"total iterations"],[Object.keys(by).length,"deliverables in progress"],[done,`at ${TARGET}+`],[tok.toLocaleString(),"tokens used"],["$"+cost.toFixed(2),"estimated spend"]].map(([v,l])=>`<div class="k"><b>${v}</b><span>${l}</span></div>`).join("");
+document.getElementById("grid").innerHTML=Object.entries(by).map(([d,a])=>{
+  const W=280,H=110,x=i=>16+i*(W-32)/Math.max(a.length-1,1),y=s=>H-14-(s-40)/60*(H-28);
+  const pts=a.map((r,i)=>`${x(i)},${y(+r.score)}`).join(" ");
+  return `<div class="c"><h3>${esc(d)} · ${esc(a[0].owner)}</h3><p>${a.length} iterations · ${a[0].score} → ${a.at(-1).score}</p>
+  <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(d)} scores">
+  <line x1="16" x2="${W-16}" y1="${y(TARGET)}" y2="${y(TARGET)}" stroke="var(--good)" stroke-dasharray="4 4"/>
+  <text x="${W-16}" y="${y(TARGET)-4}" text-anchor="end">target ${TARGET}</text>
+  <polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2"/>
+  ${a.map((r,i)=>`<circle cx="${x(i)}" cy="${y(+r.score)}" r="3.5" fill="var(--accent)"/><text x="${x(i)}" y="${y(+r.score)-7}" text-anchor="middle">${r.score}</text>`).join("")}
+  </svg></div>`}).join("")||"<p>No iterations yet.</p>";
+document.getElementById("rows").innerHTML=ROWS.slice().reverse().map(r=>{let f=[];try{f=JSON.parse(r.top_fixes)}catch(e){}
+  return `<tr><td class="n">${esc(r.time)}</td><td>${esc(r.deliverable)}</td><td class="n">v${r.version}</td><td>${esc(r.owner)}</td><td>${esc(r.instruction_version||'')}</td><td>${esc(r.examiner_model)}</td><td class="n"><b>${r.score}</b></td><td class="n">${r.critical_open??''}/${r.high_open??''}</td><td class="n">${r.gaps_closed??''}</td><td>${r.owner_notes_used??''}</td><td>${esc(f.slice(0,3).join(" · "))}</td></tr>`}).join("");
+</script></body></html>

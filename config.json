@@ -1,0 +1,76 @@
+{
+  "team_name": "AI Friday team",
+  "provider": "mock",
+  "base_url": "https://genailab.tcs.in",
+  "ssl_verify": false,
+  "writer_model": "azure/genailab-maas-gpt-4.1",
+  "examiner_model": "gemini-2.5-pro",
+  "shared_case_file": "",
+  "writer_max_tokens": 4000,
+  "examiner_max_tokens": 4000,
+  "blended_usd_per_million_tokens": 5,
+  "target_score": 95,
+  "max_rounds_per_run": 6,
+  "deliverables": {
+    "D1": {
+      "title": "Problem & success snapshot",
+      "owner": "Murali",
+      "uses": [],
+      "marks": 15
+    },
+    "D2": {
+      "title": "Architecture options & decision",
+      "owner": "Subramaniabharathi",
+      "uses": [
+        "D1"
+      ],
+      "marks": 25
+    },
+    "D3": {
+      "title": "Target-state architecture",
+      "owner": "Deepak",
+      "uses": [
+        "D1",
+        "D2"
+      ],
+      "marks": 20
+    },
+    "D4": {
+      "title": "Focused POC / validation",
+      "owner": "Muthuvel",
+      "uses": [
+        "D2",
+        "D3"
+      ],
+      "marks": 20,
+      "include_trace": true
+    },
+    "D5": {
+      "title": "Delivery & risk plan",
+      "owner": "Ravi",
+      "uses": [
+        "D1",
+        "D2",
+        "D3",
+        "D4"
+      ],
+      "marks": 15,
+      "include_team_notes": true
+    }
+  },
+  "scorecard": {
+    "Coverage": 25,
+    "Completeness": 20,
+    "Consistency": 15,
+    "Evidence & traceability": 15,
+    "Business & technical quality": 15,
+    "Clarity & decision readiness": 10
+  },
+  "poc_agents": {
+    "clarify": "Murali",
+    "spec": "Subramaniabharathi",
+    "dsl": "Muthuvel",
+    "testcases": "Deepak"
+  },
+  "variance_model": "azure_ai/genailab-maas-DeepSeek-V3-0324"
+}
