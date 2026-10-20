@@ -1,0 +1,20 @@
+[
+  {
+    "id": "G-01",
+    "location": "Pain Points",
+    "finding": "Mock: no figures from the case",
+    "severity": "High",
+    "evidence": "row 1",
+    "action": "Add the case's figures",
+    "status": "Open"
+  },
+  {
+    "id": "G-02",
+    "location": "Assumptions",
+    "finding": "Mock: assumption without owner",
+    "severity": "Medium",
+    "evidence": "A2",
+    "action": "Name an owner",
+    "status": "Open"
+  }
+]
